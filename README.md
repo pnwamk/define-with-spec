@@ -48,6 +48,6 @@ be used to check each input and the function's output.
 To remove all runtime checks (i.e. make `define/spec` ignore its function specification and act exactly like `define`), add the following:
 
 ```racket
-(require (for-syntax "temp-spec.rkt"))
+(require (for-syntax "path-to-define-with-spec.rkt"))
 (begin-for-syntax (define/spec-enforcement? #t))
 ```
