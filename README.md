@@ -49,5 +49,5 @@ To remove all runtime checks (i.e. make `define/spec` ignore its function specif
 
 ```racket
 (require (for-syntax "path-to-define-with-spec.rkt"))
-(begin-for-syntax (define/spec-enforcement? #t))
+(begin-for-syntax (define/spec-enforcement? #f))
 ```
