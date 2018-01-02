@@ -21,7 +21,7 @@
 ;;      '(1 2 3 "4")
 ;;      '(5 6 7 8))
 ;; produces the error:
-;; plus: /Users/pnwamk/Repos/define-with-spec/examples.rkt:60:5
+;; plus: /Users/pnwamk/Repos/define-with-spec/examples.rkt:20:5
 ;; 1st argument to plus failed predicate!
 ;; Expected: number?
 ;; Given: "4"
@@ -37,13 +37,13 @@
 (lookup Γ 'x) ;; ==> '(x Int)
 (lookup Γ 'a) ;; ==> #f
 
-;; (lookup)
+;;(lookup)
 ;; produces the error:
 ;; lookup: Expected 2 arguments, given 0 in: (lookup)
 
 ;; (lookup Γ 42)
 ;; produces the error:
-;; lookup: .../examples.rkt:21:0
+;; lookup: .../examples.rkt:44:0
 ;;  2nd argument to lookup failed predicate!
 ;;  Expected: symbol?
 ;;  Given: 42
@@ -58,7 +58,7 @@
 
 ;; (vec-ref (vector 'a 'b 'c) -1)
 ;; produces the error:
-;; vec-ref: .../examples.rkt:36:0
+;; vec-ref: .../examples.rkt:59:0
 ;;  2nd argument to vec-ref failed predicate!
 ;;  Expected: (both number? exact-integer? (except negative?))
 ;;  Given: -1
@@ -70,7 +70,7 @@
 
 ;; (make-posn 1 2)
 ;; produces the error:
-;; make-posn: /Users/pnwamk/Repos/define-with-spec/examples.rkt:48:0
+;; make-posn: /Users/pnwamk/Repos/define-with-spec/examples.rkt:71:0
 ;;  Returned invalid result!
 ;;  Promised: (pair number? number?)
 ;;  Returned: '(1 2)
