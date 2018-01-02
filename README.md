@@ -20,6 +20,7 @@ where a `spec` is defined by the following grammar:
 
 ```
 spec ::= identifier
+         | any
          | (either spec ...)
          | (both spec ...)
          | (except spec)
