@@ -71,12 +71,14 @@
                 spec-count)))
      (cond
        [(define/spec-enforcement?)
-        (with-syntax ([(provided-arg ...)
-                       (generate-temporaries #'(arg ...))]
-                      [fun-name (generate-temporary #'name)])
+        (with-syntax*
+            ([(provided-arg ...)
+              (generate-temporaries #'(arg ...))]
+             [fun-name (generate-temporary #'name)]
+             [raw-definition (syntax/loc stx (define (fun-name arg ...) . body))])
           (quasisyntax/loc stx
             (begin
-              (define (fun-name arg ...) . body)
+              raw-definition
               (define-syntax name
                 (λ (usage-stx)
                   (syntax-case usage-stx ()
@@ -127,6 +129,12 @@
                            (unless (rng-spec.pred result)
                              range-error)
                            result)))]
+                    [(_ . wrong-number-of-args)
+                     (raise-syntax-error 'name
+                                         (format "Expected ~a arguments, given ~a"
+                                                 #,arg-count
+                                                 (length (syntax->list #'wrong-number-of-args)))
+                                         usage-stx)]
                     [usage
                      (identifier? #'usage)
                      (with-syntax ([lambda-body
