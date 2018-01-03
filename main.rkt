@@ -115,7 +115,7 @@
                                          [col (syntax-column usage-stx)])
                              (syntax/loc usage-stx
                                (error 'name "~a:~a:~a\n Returned invalid result!\n ~a\n ~a"
-                                      src
+                                      'src
                                       line
                                       col
                                       (format "Promised: ~a" 'rng-spec)
