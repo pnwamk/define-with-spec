@@ -6,7 +6,7 @@
                      syntax/parse
                      racket/sequence))
 
-(provide define/spec -> either both except pair listof any)
+(provide define/spec -> either both except listof any)
 (provide (for-syntax define/spec-enforcement?))
 
 (define-for-syntax define/spec-enforcement? (make-parameter #t))
@@ -29,8 +29,6 @@
   (raise-syntax-error 'both "only valid in define/spec specification" stx))
 (define-syntax (except stx)
   (raise-syntax-error 'except "only valid in define/spec specification" stx))
-(define-syntax (pair stx)
-  (raise-syntax-error 'pair "only valid in define/spec specification" stx))
 (define-syntax (listof stx)
   (raise-syntax-error 'listof "only valid in define/spec specification" stx))
 (define-syntax (any stx)
@@ -48,7 +46,7 @@
              #:attr pred #'(λ (x) (and (ps.pred x) ...)))
     (pattern ((~literal except) p:spec)
              #:attr pred #'(λ (x) (not (p.pred x))))
-    (pattern ((~literal pair) a:spec d:spec)
+    (pattern ((~literal cons) a:spec d:spec)
              #:attr pred #'(λ (x) (and (pair? x) (a.pred (car x)) (d.pred (cdr x)))))
     (pattern ((~literal list) positional:spec ...)
              #:attr pred #'(λ (x) (match x [(list (? positional.pred) ...) #t] [_ #f])))

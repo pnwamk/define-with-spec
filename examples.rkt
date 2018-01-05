@@ -65,7 +65,7 @@
 
 
 (define/spec (make-posn x y)
-  (-> number? number? (pair number? number?))
+  (-> number? number? (cons number? number?))
   (list x y))
 
 ;; (make-posn 1 2)
