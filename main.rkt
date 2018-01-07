@@ -6,7 +6,9 @@
                      syntax/parse
                      racket/sequence))
 
-(provide define/spec -> either both except listof any)
+(provide define/spec
+         define-struct/spec
+         -> either both except listof any)
 (provide (for-syntax define/spec-enforcement?))
 
 (define-for-syntax define/spec-enforcement? (make-parameter #t))
@@ -34,7 +36,7 @@
 (define-syntax (any stx)
   (raise-syntax-error 'any "only valid in define/spec specification" stx))
 
-(define-syntax (define/spec stx)
+(begin-for-syntax
   (define-syntax-class spec
     #:attributes (pred)
     (pattern (~literal any)
@@ -53,7 +55,9 @@
     (pattern ((~literal listof) elem:spec)
              #:attr pred #'(λ (x) (and (list? x) (andmap elem.pred x))))
     (pattern (~or val:boolean (~and val ((~literal quote) _:id)))
-             #:attr pred #'(λ (x) (eqv? x val))))
+             #:attr pred #'(λ (x) (eqv? x val)))))
+
+(define-syntax (define/spec stx)
   (syntax-parse stx
     [(_ (name:id arg:id ...)
         ((~literal ->) arg-spec:spec ...
@@ -112,12 +116,16 @@
                                          [line (syntax-line usage-stx)]
                                          [col (syntax-column usage-stx)])
                              (syntax/loc usage-stx
-                               (error 'name "~a:~a:~a\n Returned invalid result!\n ~a\n ~a"
+                               (error 'name
+                                      "~a ~a:~a\n ~a returned invalid result!\n ~a\n ~a\n ~a"
                                       'src
                                       line
                                       col
+                                      'name
                                       (format "Promised: ~a" 'rng-spec)
-                                      (format "Returned: ~v" result))))])
+                                      (format "Returned: ~v" result)
+                                      (format "Argument list: ~v"
+                                              (list arg ...)))))])
                        (syntax/loc usage-stx
                          (let ([arg provided-arg] ...)
                            (unless (spec a)
@@ -143,3 +151,21 @@
         (syntax/loc stx
           (define (name arg ...) . body))])]))
 
+
+
+(define-syntax (define-struct/spec stx)
+  (syntax-parse stx
+    [(_ name:id ([fld:id fld-spec:spec] ...))
+     (with-syntax ([unsafe-constructor
+                    (format-id stx "unsafe-make-~a" (syntax-e #'name))]
+                   [safe-constructor
+                    (format-id stx "make-~a" (syntax-e #'name))]
+                   [predicate
+                    (format-id stx "~a?" (syntax-e #'name))])
+       (syntax/loc stx
+         (begin
+           (struct name (fld ...) #:transparent
+             #:constructor-name unsafe-constructor)
+           (define/spec (safe-constructor fld ...)
+             (-> fld-spec ... predicate)
+             (unsafe-constructor fld ...)))))]))
