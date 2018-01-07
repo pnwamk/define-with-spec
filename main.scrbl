@@ -14,12 +14,12 @@
 @defmodule[define-with-spec]
 
 This package provides a few simple forms for creating
-definitions (i.e. procedure, struct) with specifications.
-These macros are much simpler and not as expressive as those
-provided by Racket's contract library, but error messages
-for same-module violations of specifications will provide
-details about where the violation occurred that the contract
-checks will not.
+definitions with specifications. These macros are much
+simpler and not as expressive as those provided by Racket's
+contract library, but error messages for same-module
+violations of specifications will provide details about
+where the violation occurred that the standard
+@racket[racket/contract] checks will not.
 
 @section{Definitions with Specifications}
 
@@ -94,17 +94,19 @@ checks will not.
 }
 
 @defform[
- #:id define-struct/spec
- (define-struct/spec name ([fld spec] ...))]{
+ #:id struct/spec
+ (struct/spec name ([fld spec] ...))]{
 
- A @racket[define-struct/spec] form defines a structure type
- @racket[name] with specifications for each field. In other
- words, it defines the following procedures:
+ A @racket[struct/spec] form defines a structure data type
+ @racket[name] with a constructor that enforces the given
+ specification for each field. In other words, it defines the
+ following procedures:
 
- @itemlist[@item{@racket[make-name], a constructor which
-             takes as many arguments as there are @racket[fld]s in order to
-             create a @racket[name] struct; each argument is checked
-             against the associated @racket[fld]'s @racket[spec].}
+ @itemlist[@item{@racket[name], a constructor which takes as
+             many arguments as there are @racket[fld]s in order to create
+             a @racket[name] struct; each argument is checked against the
+             associated @racket[fld]'s @racket[spec]. This identifier can
+             also be used as a match-expander.}
            @item{@racket[name?], a predicate (i.e. a procedure
              of one argument) that returns @racket[#t] when given an
              instance of the structure type, otherwise it returns
@@ -115,13 +117,13 @@ checks will not.
 
  @examples[
  #:eval the-eval
- (define-struct/spec posn ([x number?] [y number?]))
+ (struct/spec posn ([x number?] [y number?]))
 
- (define origin (make-posn 0 0))
- (define p (make-posn 3 4))
+ (define origin (posn 0 0))
+ (define p (posn 3 4))
 
  (eval:error
-  (make-posn "3" "4"))
+  (posn "3" "4"))
 
  (define/spec (distance p1 p2)
    (-> posn? posn? number?)
@@ -221,4 +223,14 @@ Used to negate a
 
  e.g. @racket[(both integer? (except negative?))]
  allows non-negative integers.
+}
+
+@section{Disabling Checks}
+
+@defparam[define-with-spec-enforcement status boolean?
+          #:value #t]{
+Specification checking can be disabled in a module by
+setting the @racket[define-with-spec-enforcement] parameter
+(provided @racket[for-syntax] by @racket[define-with-spec])
+to @racket[#f] at phase level 1.
 }

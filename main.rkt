@@ -1,17 +1,22 @@
 #lang racket/base
 
 (require racket/match
+         racket/unsafe/ops
          (for-syntax racket/base
                      racket/syntax
                      syntax/parse
+                     racket/list
                      racket/sequence))
 
-(provide define/spec
-         define-struct/spec
-         -> either both except listof any)
-(provide (for-syntax define/spec-enforcement?))
+(provide
+ ;; definition forms
+ define/spec
+ struct/spec
+ ;; spec constructors/combinators
+ -> either both except listof any)
 
-(define-for-syntax define/spec-enforcement? (make-parameter #t))
+(define-for-syntax define-with-spec-enforcement (make-parameter #t))
+(provide (for-syntax define-with-spec-enforcement))
 
 (define (ending n)
   (case (remainder n 100)
@@ -57,6 +62,7 @@
     (pattern (~or val:boolean (~and val ((~literal quote) _:id)))
              #:attr pred #'(λ (x) (eqv? x val)))))
 
+
 (define-syntax (define/spec stx)
   (syntax-parse stx
     [(_ (name:id arg:id ...)
@@ -72,12 +78,14 @@
                 arg-count
                 spec-count)))
      (cond
-       [(define/spec-enforcement?)
+       [(define-with-spec-enforcement)
         (with-syntax*
             ([(provided-arg ...)
               (generate-temporaries #'(arg ...))]
              [fun-name (generate-temporary #'name)]
-             [raw-definition (syntax/loc stx (define (fun-name arg ...) . body))])
+             [raw-definition (syntax/loc stx (define (fun-name arg ...) . body))]
+             [error-name (or (syntax-property #'name 'define/spec-error-name)
+                             (syntax-e #'name))])
           (quasisyntax/loc stx
             (begin
               raw-definition
@@ -98,14 +106,14 @@
                                            [line (syntax-line usage-stx)]
                                            [col (syntax-column usage-stx)])
                                (quasisyntax/loc given
-                                 (error 'name
+                                 (error 'error-name
                                         "~a:~a:~a\n ~a~a argument to ~a failed predicate!\n ~a\n ~a"
                                         src
                                         line
                                         col
                                         i
                                         (ending i)
-                                        'name
+                                        'error-name
                                         (format "Expected: ~a" 'a-spec)
                                         (format "Given: ~v" a)))))]
                           [(spec (... ...)) #'(arg-spec.pred ...)]
@@ -116,12 +124,12 @@
                                          [line (syntax-line usage-stx)]
                                          [col (syntax-column usage-stx)])
                              (syntax/loc usage-stx
-                               (error 'name
+                               (error 'error-name
                                       "~a ~a:~a\n ~a returned invalid result!\n ~a\n ~a\n ~a"
                                       'src
                                       line
                                       col
-                                      'name
+                                      'error-name
                                       (format "Promised: ~a" 'rng-spec)
                                       (format "Returned: ~v" result)
                                       (format "Argument list: ~v"
@@ -136,7 +144,7 @@
                              range-error)
                            result)))]
                     [(_ . wrong-number-of-args)
-                     (raise-syntax-error 'name
+                     (raise-syntax-error 'error-name
                                          (format "Expected ~a arguments, given ~a"
                                                  #,arg-count
                                                  (length (syntax->list #'wrong-number-of-args)))
@@ -153,19 +161,48 @@
 
 
 
-(define-syntax (define-struct/spec stx)
+(define-syntax (struct/spec stx)
   (syntax-parse stx
     [(_ name:id ([fld:id fld-spec:spec] ...))
-     (with-syntax ([unsafe-constructor
-                    (format-id stx "unsafe-make-~a" (syntax-e #'name))]
-                   [safe-constructor
-                    (format-id stx "make-~a" (syntax-e #'name))]
-                   [predicate
-                    (format-id stx "~a?" (syntax-e #'name))])
+     (with-syntax* ([safe-constructor (syntax-property
+                                       (format-id stx "make-~a" (syntax-e #'name))
+                                       'define/spec-error-name
+                                       (syntax-e #'name))]
+                    [unsafe-constructor
+                     (format-id stx "unsafe-make-~a" (syntax-e #'name))]
+                    [predicate
+                     (format-id stx "~a?" (syntax-e #'name))]
+                    [(name-fld ...)
+                     (for/list ([fld (in-syntax #'(fld ...))])
+                       (format-id fld "~a-~a"
+                                  (syntax-e #'name)
+                                  (syntax-e fld)))]
+                    [(fld-idx ...) (range (length (syntax->list #'(fld ...))))]
+                    [(fld-pat ...) (generate-temporaries #'(fld ...))])
        (syntax/loc stx
          (begin
-           (struct name (fld ...) #:transparent
-             #:constructor-name unsafe-constructor)
+           (define-values (unsafe-constructor
+                           predicate
+                           name-fld ...)
+             (let ()
+               (struct name (fld ...) #:transparent
+                 #:authentic
+                 #:constructor-name unsafe-constructor)
+               (values unsafe-constructor
+                       predicate
+                       name-fld ...)))
            (define/spec (safe-constructor fld ...)
-             (-> fld-spec ... predicate)
-             (unsafe-constructor fld ...)))))]))
+             (-> fld-spec ... any)
+             (unsafe-constructor fld ...))
+           (define-match-expander name
+             (λ (stx)
+               (syntax-case stx ()
+                 [(_ fld-pat ...)
+                  (syntax/loc stx (? predicate
+                                     (and (app (λ (x) (unsafe-struct*-ref x fld-idx))
+                                               fld-pat)
+                                          ...)))]))
+             (λ (stx)
+               (syntax-case stx ()
+                 [(_ . args) (syntax/loc stx (safe-constructor . args))]))))))]))
+
