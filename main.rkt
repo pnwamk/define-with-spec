@@ -186,7 +186,6 @@
                            name-fld ...)
              (let ()
                (struct name (fld ...) #:transparent
-                 #:authentic
                  #:constructor-name unsafe-constructor)
                (values unsafe-constructor
                        predicate
