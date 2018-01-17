@@ -108,7 +108,7 @@
                                (quasisyntax/loc given
                                  (error 'error-name
                                         "~a:~a:~a\n ~a~a argument to ~a failed predicate!\n ~a\n ~a"
-                                        src
+                                        'src
                                         line
                                         col
                                         i
