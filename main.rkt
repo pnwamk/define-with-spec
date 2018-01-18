@@ -5,6 +5,7 @@
          (for-syntax racket/base
                      racket/syntax
                      syntax/parse
+                     racket/match
                      racket/list
                      racket/sequence))
 
@@ -66,17 +67,20 @@
 (define-syntax (define/spec stx)
   (syntax-parse stx
     [(_ (name:id arg:id ...)
-        ((~literal ->) arg-spec:spec ...
-                       rng-spec:spec)
+        (~and the-given-function-spec
+              ((~literal ->) arg-spec:spec ...
+                             rng-spec:spec))
         . body)
      (define arg-count (length (syntax->list #'(arg ...))))
      (define spec-count (length (syntax->list #'(arg-spec ...))))
      (unless (= arg-count spec-count)
        (raise-syntax-error
         'def/spec
-        (format "Expected ~a argument predicates, given ~a."
+        (format "Expected ~a argument specs for ~a, given ~a"
                 arg-count
-                spec-count)))
+                (syntax-e #'name)
+                spec-count)
+        #'the-given-function-spec))
      (cond
        [(define-with-spec-enforcement)
         (with-syntax*
@@ -164,6 +168,19 @@
 (define-syntax (struct/spec stx)
   (syntax-parse stx
     [(_ name:id ([fld:id fld-spec:spec] ...))
+     (let check-unique-args! ([ids (syntax->list #'(fld ...))])
+       (match ids
+         [(list) (void)]
+         [(cons x xs)
+          (cond
+            [(member x xs free-identifier=?)
+             (raise-syntax-error
+              'struct/spec
+              (format "Duplicate field names are not allowed; ~a appeared more than once."
+                      (syntax-e x))
+              stx)]
+            [else
+             (check-unique-args! xs)])]))
      (with-syntax* ([safe-constructor (syntax-property
                                        (format-id stx "make-~a" (syntax-e #'name))
                                        'define/spec-error-name
