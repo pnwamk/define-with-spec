@@ -1,4 +1,8 @@
 # define-with-spec
+
+[![Build Status](https://travis-ci.org/pnwamk/define-with-spec.svg?branch=master)](https://travis-ci.org/pnwamk/define-with-spec)
+
+
 Racket macro for adding simple specifications to definitions.
 
 Specifications are enforced by code at each call site.
