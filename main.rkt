@@ -129,7 +129,7 @@
                                          [col (syntax-column usage-stx)])
                              (syntax/loc usage-stx
                                (error 'error-name
-                                      "~a ~a:~a\n ~a returned invalid result!\n ~a\n ~a\n ~a"
+                                      "~a:~a:~a\n ~a returned invalid result!\n ~a\n ~a\n ~a"
                                       'src
                                       line
                                       col
