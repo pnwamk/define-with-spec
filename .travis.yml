@@ -16,5 +16,5 @@ install:
 - git clone https://github.com/pnwamk/define-with-spec.git ~/define-with-spec
 
 script:
-- raco test ~/define-with-spec/examples.rkt
+- raco test ~/define-with-spec/tests/tests.rkt
 - echo "done"
