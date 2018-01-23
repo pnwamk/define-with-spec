@@ -5,5 +5,5 @@
 (define deps '("base"))
 (define pkg-desc "Simple Function Specifications.")
 
-(define build-deps '("base"))
-(define scribblings '(("main.scrbl")))
+(define build-deps '("racket-doc" "scribble-lib" "rackunit-lib"))
+(define scribblings '(("scribblings/define-with-spec.scrbl")))
