@@ -144,3 +144,14 @@
 (check-phase-1-exn-msgs
  ("Duplicate field names are not allowed; x appeared more than once")
  (struct/spec test-struct ([x number?] [x number?])))
+
+(struct/spec Atom ([id symbol?] [blah any]))
+
+(check-exn
+ (failure-with-msgs '(".rkt:156:8"
+                      "1st argument to Atom failed predicate!"
+                      "Expected: symbol?"
+                      "Given: 42"))
+ (λ () (map
+        Atom
+        (list 'x 42) (list 'x 42))))

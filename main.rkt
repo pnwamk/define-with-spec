@@ -158,7 +158,8 @@
                      (with-syntax ([lambda-body
                                     (syntax/loc #'usage
                                       (name arg ...))])
-                       #'(λ (arg ...) lambda-body))]))))))]
+                       (syntax/loc #'usage
+                         (λ (arg ...) lambda-body)))]))))))]
        [else
         (syntax/loc stx
           (define (name arg ...) . body))])]))
@@ -220,5 +221,11 @@
                                           ...)))]))
              (λ (stx)
                (syntax-case stx ()
-                 [(_ . args) (syntax/loc stx (safe-constructor . args))]))))))]))
-
+                 [(_ . args) (syntax/loc stx (safe-constructor . args))]
+                 [usage
+                  (identifier? #'usage)
+                  (with-syntax ([lambda-body
+                                 (syntax/loc #'usage
+                                   (name fld ...))])
+                    (syntax/loc #'usage
+                      (λ (fld ...) lambda-body)))]))))))]))
