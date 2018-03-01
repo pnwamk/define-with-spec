@@ -120,8 +120,11 @@
                                         'error-name
                                         (format "Expected: ~a" 'a-spec)
                                         (format "Given: ~v" a)))))]
-                          [(spec (... ...)) #'(arg-spec.pred ...)]
-                          [(a (... ...)) #'(arg ...)]
+                          [(arg-check (... ...))
+                           #'#,(for/list ([sp (in-syntax #'(arg-spec ...))]
+                                          [a (in-syntax #'(arg ...))]
+                                          [spec-pred (in-syntax #'(arg-spec.pred ...))])
+                                 (quasisyntax/loc sp (#,spec-pred #,a)))]
                           [result (generate-temporary)]
                           [range-error
                            (with-syntax ([src (syntax-source usage-stx)]
@@ -140,7 +143,7 @@
                                               (list arg ...)))))])
                        (syntax/loc usage-stx
                          (let ([arg provided-arg] ...)
-                           (unless (spec a)
+                           (unless arg-check
                              arg-error)
                            (... ...)
                            (define result (fun-name arg ...))
